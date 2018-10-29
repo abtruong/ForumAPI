@@ -3,8 +3,8 @@ NAME:       Alexander Truong
 CWID:       889164513
 CLASS:      CPSC 476
 PROFESSOR:  Kenytt Averyo
-ASSIGNENT:  Project 1
-DUE DATE:   Sep. 26, 2018
+ASSIGNENT:  Project 2
+DUE DATE:   Oct. 31, 2018
 '''
 
 from flask import Flask, jsonify, request, Response, abort, make_response
@@ -17,8 +17,17 @@ import sys, json, sqlite3, click, time, uuid
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
-global database
-global cursor
+def connect_db():
+    database = sqlite3.connect('maindb.db')
+    cursor = database.cursor()
+    return database, cursor
+
+def shard_connect(thread_num):
+    shard_num = thread_num % 3
+    shard_db = 'shard_' + str(shard_num) + '.db'
+    shard = sqlite3.connect(shard_db)
+    shard_cursor = shard.cursor()
+    return shard, shard_cursor
 
 @app.cli.command('init_db')
 def init_db():
@@ -40,7 +49,6 @@ def init_db():
             database.cursor().executescript(f.read())
         database.commit()
         print("INITIALIZED DATABASE")
-        print('HELLO')
     except:
         sys.exit("FAILED -- CANNOT INITIALIZE DATABASE")
     finally:
@@ -63,7 +71,7 @@ def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        cursor = database.cursor()
+        _, cursor = connect_db()
         cursor.execute('''SELECT EXISTS(SELECT username, password
                                         FROM Users
                                         WHERE username = ? AND password = ?)''',
@@ -75,17 +83,13 @@ def auth_required(func):
         return abort(401)
     return decorated
 
-def close_db():
-    print('\n\nClosing database\n\n')
-    database.close()
-
 def check_forum_exists(cursor, forum_id):
     ''' Check if forum exists:
 
     Checks the database to see if the specified forum exists.
     '''
     cursor.execute('''SELECT EXISTS(SELECT forum_id
-                                    FROM maindb.Forums
+                                    FROM Forums
                                     WHERE forum_id = ?)''',
                    (forum_id,))
     return cursor.fetchone()[0]
@@ -97,7 +101,7 @@ def check_thread_exists(cursor, thread_num, forum_id):
     correct forum_id assoicated with it.
     '''
     cursor.execute('''SELECT EXISTS(SELECT thread_num
-                                    FROM maindb.Threads
+                                    FROM Threads
                                     WHERE thread_num = ? AND forum_id = ?)''',
                    (thread_num, forum_id))
     return cursor.fetchone()[0]
@@ -137,13 +141,17 @@ def list_forums():
     '''
     no_forums = []
     try:
-        cursor.execute("SELECT * FROM maindb.Forums")
+        database, cursor = connect_db()
+        cursor.execute('''SELECT * 
+                        FROM Forums''')
         forums = cursor.fetchall()
         list_forums = []
         for row in forums:
             list_forums.append({'id':row[0], 'name':row[1], 'creator':row[2]})
     except:
         return make_response(jsonify(no_forums), 200)
+    finally:
+        database.close()
     return make_response(jsonify(list_forums), 200)
 
 @app.route('/forums/', methods=['POST'])
@@ -161,17 +169,20 @@ def create_forum():
     '''
     request_json_data = request.get_json()
     try:
-        cursor.execute('''INSERT INTO maindb.Forums (name, creator)
+        database, cursor = connect_db()
+        cursor.execute('''INSERT INTO Forums (name, creator)
                         VALUES (?, ?)''',
                         (request_json_data['name'], current_user))
         database.commit()
         cursor.execute('''SELECT forum_id
-                        FROM maindb.Forums
+                        FROM Forums
                         WHERE name = ? AND creator = ?''',
                         (request_json_data['name'], current_user))
         forum = cursor.fetchone()[0]
     except:
         return abort(409)
+    finally:
+        database.close()
     response = Response(status=201, mimetype='application/json')
     response.headers['Location'] = "/forums/%s" % str(forum)
     return response
@@ -188,11 +199,12 @@ def list_threads(forum_id):
     (Not Found) will be raised. Otherwise, it will return the JSON of threads with
     a 200 HTTP status code (OK).
     '''
+    database, cursor = connect_db()
     if check_forum_exists(cursor, forum_id) != 1:
         return abort(404)
     try:
         cursor.execute('''SELECT thread_num, title, creator, thread_time, thread_id, unix_time
-                        FROM maindb.Threads
+                        FROM Threads
                         WHERE forum_id = ?
                         ORDER BY unix_time DESC''',
                         (forum_id,))
@@ -202,6 +214,8 @@ def list_threads(forum_id):
             list_threads.append({'thread_num':row[0], 'title':row[1], 'creator':row[2], 'timestamp':row[3], 'thread_id':row[4]})
     except:
         return abort(404)
+    finally:
+        database.close()
     return make_response(jsonify(list_threads), 200)
 
 @app.route('/forums/<int:forum_id>/', methods=['POST'])
@@ -219,23 +233,26 @@ def create_thread(forum_id):
     If a condition is not met or fails, it will raise a 404 HTTP status (Not Found)
     response.
     '''
+    database, cursor = connect_db()
     request_json_data = request.get_json()
     if check_forum_exists(cursor, forum_id) != 1:
         return abort(404)
     try:
         timestamp = get_time()
         thread_id = generate_GUID()
-        cursor.execute('''INSERT INTO maindb.Threads (forum_id, title, thread_text, creator, thread_time, created_time, unix_time, thread_id)
+        cursor.execute('''INSERT INTO Threads (forum_id, title, thread_text, creator, thread_time, created_time, unix_time, thread_id)
                         VALUES (?,?,?,?,?,?,?,?)''',
                         (forum_id, request_json_data['title'], request_json_data['text'], current_user, timestamp, timestamp, time.time(), thread_id))
         database.commit()
         cursor.execute('''SELECT thread_num
-                        FROM maindb.Threads
+                        FROM Threads
                         WHERE forum_id = ? AND title = ? AND thread_text = ? AND creator = ? AND thread_id = ?''',
                         (forum_id, request_json_data['title'], request_json_data['text'], current_user, thread_id))
         thread_num = cursor.fetchone()[0]
     except:
         return abort(404)
+    finally:
+        database.close()
     response = Response(status=201, mimetype='application/json')
     response.headers['Location'] = "/forums/%s/%s" % (str(forum_id), str(thread_num))
     return response
@@ -252,28 +269,34 @@ def list_posts(forum_id, thread_num):
     (Not Found) will be raised. Otherwise, it will return the JSON of posts with
     a 200 HTTP status code (OK).
     '''
+
+    database, cursor = connect_db()
     if check_thread_exists(cursor, thread_num, forum_id) != 1:
         return abort(404)
     try:
-        shard_number = thread_num % 3   # 1%3=1, 2%3=2, 3%3=0, 4%3=1, etc.
-        shard = 'posts' + str(shard_number)
+        shard_db, shard_cursor = shard_connect(thread_num)
         cursor.execute('''SELECT creator, thread_text, created_time, thread_id
-                        FROM maindb.Threads
+                        FROM Threads
                         WHERE thread_num = ?
                         AND forum_id = ?''',
                         (thread_num, forum_id))
         posts = cursor.fetchone()
-        list_posts = [{'author':posts[0], 'text':posts[1], 'timestamp':posts[2], 'thread_id':posts[3]}]
+        list_posts = [{'post_num':1, 'author':posts[0], 'text':posts[1], 'timestamp':posts[2], 'shard_key':posts[3]}]
         shard_key = posts[3]
-        cursor.execute('''SELECT author, text_post, post_time, thread_id
-                        FROM ?.Posts
-                        WHERE ?.Posts.thread_id = ?''',
-                        (shard, shard, shard_key))
-        posts = cursor.fetchall()
-        for row in posts:
-            list_posts.append({'author':row[0], 'text':row[1], 'timestamp':row[2], 'thread_id':row[3]})
+        shard_cursor.execute('''SELECT author, text_post, post_time, shard_key
+                        FROM Posts
+                        WHERE shard_key = ?''',
+                        (shard_key,))
+        shard_posts = shard_cursor.fetchall()
+        count = 2
+        for row in shard_posts:
+            list_posts.append({'post_num':count, 'author':row[0], 'text':row[1], 'timestamp':row[2], 'shard_key':row[3]})
+            count = count + 1
     except:
         return abort(404)
+    finally:
+        shard_db.close()
+        database.close()
     return make_response(jsonify(list_posts), 200)
 
 @app.route('/forums/<int:forum_id>/<int:thread_num>/', methods=['POST'])
@@ -288,29 +311,33 @@ def create_post(forum_id, thread_num):
     If a condition is not met or fails, it will raise a 404 HTTP status (Not Found)
     response.
     '''
+    database, cursor = connect_db()
+    shard_db, shard_cursor = shard_connect(thread_num)
     request_json_data = request.get_json()
     if check_thread_exists(cursor, thread_num, forum_id) != 1:
         return abort(404)
     try:
-        shard_number = thread_num % 3   # 1%3=1, 2%3=2, 3%3=0, 4%3=1, etc.
-        shard = 'posts' + str(shard_number)
         timestamp = get_time()
         cursor.execute('''SELECT thread_id
-                        FROM maindb.Threads
+                        FROM Threads
                         WHERE thread_num = ?''',
                         (thread_num,))
-        shard_key = cursor.fetchone()[0]
-        cursor.execute('''INSERT INTO ?.Posts (thread_id, text_post, author, post_time)
-                        VALUES(?,?,?,?,?)''',
-                        (shard, shard_key, request_json_data['text'], current_user, timestamp))
-        database.commit()
-        cursor.execute('''UPDATE maindb.Threads
+        thread = cursor.fetchone()
+        shard_key = thread[0]
+        shard_cursor.execute('''INSERT INTO Posts (shard_key, text_post, author, post_time)
+                        VALUES(?,?,?,?)''',
+                        (shard_key, request_json_data['text'], current_user, timestamp))
+        shard_db.commit()
+        cursor.execute('''UPDATE Threads
                         SET thread_time = ?, unix_time = ?
                         WHERE forum_id = ? AND thread_num = ?''',
                         (timestamp, time.time(), forum_id, thread_num))
         database.commit()
     except:
         return abort(404)
+    finally:
+        shard_db.close()
+        database.close()
     return Response(status=201, mimetype='application/json')
     
 @app.route('/users/', methods=['POST'])
@@ -326,12 +353,15 @@ def create_user():
     '''
     request_json_data = request.get_json()
     try:
+        database, cursor = connect_db()
         cursor.execute('''INSERT INTO Users (username, password)
                         VALUES (?, ?)''',
                         (request_json_data['username'], request_json_data['password']))
         database.commit()
     except:
         return abort(409)
+    finally:
+        database.close()
     return Response(status=201, mimetype='application/json')
 
 @app.route('/users/', methods=['PUT'])
@@ -347,6 +377,7 @@ def change_user_pw():
     change the password of a user not stored in the database, a 404 HTTP status code (Not Found)
     will be raised.
     '''
+    database, cursor = connect_db()
     request_json_data = request.get_json()
     cursor.execute('''SELECT EXISTS(SELECT username
                                     FROM Users
@@ -359,20 +390,14 @@ def change_user_pw():
                         WHERE username = ?''',
                         (request_json_data['password'], request_json_data['username']))
         database.commit()
+        database.close()
         return Response(status=200, mimetype='application/json')
     elif match == 1 and str(current_user).lower() != str(request_json_data['username']).lower():
+        database.close()
         return abort(409)
     else:
+        database.close()
         return abort(404)
     
 if __name__ == '__main__':
-    try:
-        database = sqlite3.connect('maindb.db')
-        print("SUCCESS -- CONNECTION ESTABLISHED")
-        cursor = database.cursor()
-        app.run()
-    except:
-        sys.exit("FAILED -- NO DATABASE CONNECTION ESTABLISHED . . . EXITING")
-    finally:
-        database.close()
-        print('\n\nDatabase Connection Terminated\n\n')
+    app.run()

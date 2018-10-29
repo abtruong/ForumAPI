@@ -1,7 +1,7 @@
 ATTACH DATABASE 'maindb.db' AS 'maindb';
 ATTACH DATABASE 'shard_1.db' AS 'posts1';
 ATTACH DATABASE 'shard_2.db' AS 'posts2';
-ATTACH DATABASE 'shard_3.db' AS 'posts0';
+ATTACH DATABASE 'shard_0.db' AS 'posts0';
 
 CREATE TABLE IF NOT EXISTS maindb.Forums (
   forum_id        INTEGER NOT NULL  ,
@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS maindb.Users (
 
 CREATE TABLE IF NOT EXISTS posts1.Posts (
   shard_key       TEXT    ,
-  post_num        INTEGER ,
   author          TEXT    ,
   text_post       TEXT    ,
   post_time       TEXT    
@@ -42,7 +41,6 @@ CREATE TABLE IF NOT EXISTS posts1.Posts (
 
 CREATE TABLE IF NOT EXISTS posts2.Posts (
   shard_key       TEXT    ,
-  post_num        INTEGER ,
   author          TEXT    ,
   text_post       TEXT    ,
   post_time       TEXT    
@@ -50,7 +48,6 @@ CREATE TABLE IF NOT EXISTS posts2.Posts (
 
 CREATE TABLE IF NOT EXISTS posts0.Posts (
   shard_key       TEXT    ,
-  post_num        INTEGER ,
   author          TEXT    ,
   text_post       TEXT    ,
   post_time       TEXT    
@@ -90,26 +87,26 @@ VALUES
   (3, 6, '02089b32-6b1e-4193-ad58-1c491ea0079f', 'Is PHP better than SQL?', 'Never learned SQL and thinking about switching, but would like more info', 'MissAwesome', 'Sat, 15 Sep 2018 15:42:28 PST', 'Sat, 15 Sep 2018 15:44:28 PST', 10005),
   (3, 7, '07f603c8-11fa-4a1e-8cba-beb7edfdc03f', 'php sux', 'it is so terrible', 'PHPHater', 'Sat, 15 Sep 2018 17:42:28 PST', 'Sat, 15 Sep 2018 19:42:28 PST', 10006);
 
-INSERT INTO posts1.Posts (shard_key, post_num, author, text_post, post_time)
+INSERT INTO posts1.Posts (shard_key, author, text_post, post_time)
 VALUES
-  ('589a82c2-e373-4b96-a44c-5d6cc39a28d8', 1, 'MrAnswers', 'For linux, just run the command ''touch filename.html''', 'Sat, 15 Sep 2018 15:50:28 PST'),
-  ('589a82c2-e373-4b96-a44c-5d6cc39a28d8', 2, 'MrQuestions', 'k thnx', 'Sat, 15 Sep 2018 15:52:28 PST'),
-  ('41e30f10-5d72-45ca-b531-c6177339b476', 8, 'NonProCSSGuy', 'Cascading Style Sheets. Are you sure you''re a pro?', 'Sat, 15 Sep 2018 14:42:28 PST'),
-  ('41e30f10-5d72-45ca-b531-c6177339b476', 9, 'MrCSSPro', '... maybe', 'Sat, 15 Sep 2018 15:42:28 PST'),
-  ('07f603c8-11fa-4a1e-8cba-beb7edfdc03f', 14, 'DunceyMcDunce', 'that''s not very constructive', 'Sat, 15 Sep 2018 18:42:28 PST'),
-  ('07f603c8-11fa-4a1e-8cba-beb7edfdc03f', 15, 'PHPHater', 'neither are you LUL', 'Sat, 15 Sep 2018 19:42:28 PST');
+  ('589a82c2-e373-4b96-a44c-5d6cc39a28d8', 'MrAnswers', 'For linux, just run the command ''touch filename.html''', 'Sat, 15 Sep 2018 15:50:28 PST'),
+  ('589a82c2-e373-4b96-a44c-5d6cc39a28d8', 'MrQuestions', 'k thnx', 'Sat, 15 Sep 2018 15:52:28 PST'),
+  ('41e30f10-5d72-45ca-b531-c6177339b476', 'NonProCSSGuy', 'Cascading Style Sheets. Are you sure you''re a pro?', 'Sat, 15 Sep 2018 14:42:28 PST'),
+  ('41e30f10-5d72-45ca-b531-c6177339b476', 'MrCSSPro', '... maybe', 'Sat, 15 Sep 2018 15:42:28 PST'),
+  ('07f603c8-11fa-4a1e-8cba-beb7edfdc03f', 'DunceyMcDunce', 'that''s not very constructive', 'Sat, 15 Sep 2018 18:42:28 PST'),
+  ('07f603c8-11fa-4a1e-8cba-beb7edfdc03f', 'PHPHater', 'neither are you LUL', 'Sat, 15 Sep 2018 19:42:28 PST');
 
-INSERT INTO posts2.Posts (shard_key, post_num, author, text_post, post_time)
+INSERT INTO posts2.Posts (shard_key, author, text_post, post_time)
 VALUES
-  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 3, 'AnotherDuncey', 'just use a text editor lol', 'Sat, 15 Sep 2018 16:55:28 PST'),
-  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 4, 'DunceyMcDunce', 'like notepad++?', 'Sat, 15 Sep 2018 17:42:28 PST'),
-  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 5, 'AnotherDuncey', 'yes', 'Sat, 15 Sep 2018 17:55:28 PST'),
-  ('bdacef59-df26-4b9b-8779-333fa53a7f95', 10, 'NotTheSmartest', 'It provides an easier way to style your HTML than in HTML itself', 'Sat, 15 Sep 2018 15:42:28 PST'),
-  ('bdacef59-df26-4b9b-8779-333fa53a7f95', 11, 'ImTheSmartest', 'I see. Thanks!', 'Sat, 15 Sep 2018 16:42:28 PST');
+  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 'AnotherDuncey', 'just use a text editor lol', 'Sat, 15 Sep 2018 16:55:28 PST'),
+  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 'DunceyMcDunce', 'like notepad++?', 'Sat, 15 Sep 2018 17:42:28 PST'),
+  ('fb1628d7-f2c6-4c66-a2ac-89b8220128fb', 'AnotherDuncey', 'yes', 'Sat, 15 Sep 2018 17:55:28 PST'),
+  ('bdacef59-df26-4b9b-8779-333fa53a7f95', 'NotTheSmartest', 'It provides an easier way to style your HTML than in HTML itself', 'Sat, 15 Sep 2018 15:42:28 PST'),
+  ('bdacef59-df26-4b9b-8779-333fa53a7f95', 'ImTheSmartest', 'I see. Thanks!', 'Sat, 15 Sep 2018 16:42:28 PST');
 
-INSERT INTO posts0.Posts (shard_key, post_num, author, text_post, post_time)
+INSERT INTO posts0.Posts (shard_key, author, text_post, post_time)
 VALUES
-  ('cf206aed-f0a7-4b88-9704-1ea4366aa54e', 6, 'NonfranticLady', 'Did you check the HTML documentation?', 'Sat, 15 Sep 2018 18:42:28 PST'),
-  ('cf206aed-f0a7-4b88-9704-1ea4366aa54e', 7, 'FranticPerson', 'nevermind i ifugred it out lol', 'Sat, 15 Sep 2018 18:43:28 PST'),
-  ('02089b32-6b1e-4193-ad58-1c491ea0079f', 12, 'PHPHater', 'of course sql is so much better', 'Sat, 15 Sep 2018 15:43:28 PST'),
-  ('02089b32-6b1e-4193-ad58-1c491ea0079f', 13, 'MissAwesome', 'I think your name shows you''re biased', 'Sat, 15 Sep 2018 15:44:28 PST');
+  ('cf206aed-f0a7-4b88-9704-1ea4366aa54e', 'NonfranticLady', 'Did you check the HTML documentation?', 'Sat, 15 Sep 2018 18:42:28 PST'),
+  ('cf206aed-f0a7-4b88-9704-1ea4366aa54e', 'FranticPerson', 'nevermind i figured it out lol', 'Sat, 15 Sep 2018 18:43:28 PST'),
+  ('02089b32-6b1e-4193-ad58-1c491ea0079f', 'PHPHater', 'of course sql is so much better', 'Sat, 15 Sep 2018 15:43:28 PST'),
+  ('02089b32-6b1e-4193-ad58-1c491ea0079f', 'MissAwesome', 'I think your name shows you''re biased', 'Sat, 15 Sep 2018 15:44:28 PST');
