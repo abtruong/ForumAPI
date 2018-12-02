@@ -1,6 +1,6 @@
-# Sharding the WebAPI
+# NoSQL Implementation of WebAPI Using Cassandra/ScyllaDB
 
-A web back-end application for querying and storing information from a database to a forum-based application using JSON. This application runs on Python using the Flask module and SQlite3 for the databases. An initial schema is provided with test data. RESTful endpoints are used to handle GET, POST, and PUT methods running this python application. 
+A web back-end application for querying and storing information of a NoSQL database to a forum-based application using JSON. This application runs on Python using the Flask module, Docker, and Cassandra/ScyllaDB for the databases using CQL. An initial schema is provided with test data. RESTful endpoints are used to handle GET, POST, and PUT methods running this python application. 
 
 This project is a derivative of the WebAPI folder; however, instead of a relational database, it has been ported over to a NoSQL database, specifically ScyllaDB. Instead of having to use SQL statements and a relational database schema, ScyllaDB uses a NoSQL schema where most information is stored in one big table (in this case, "entity_tables") using a keyspace. All statements that were writtein via SQL or sqlite3 have been changed to Cassandra's version: CQL.
 
