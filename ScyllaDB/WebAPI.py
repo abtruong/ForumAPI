@@ -302,7 +302,8 @@ def list_posts(forum_id, thread_id):
 @app.route('/forums/<int:forum_id>/<int:thread_id>/', methods=['POST'])
 @auth_required              # create_forum() = auth_required(create_forum())
 def create_post(forum_id, thread_id):
-    ''' Create a post in the database:
+    ''' 
+    Create a post in the database:
 
     Inserts a new post into the database. If all conditions are met, a new entry 
     will be inserted into the Posts table. It will return a 201 HTTP status (Created) 
@@ -343,7 +344,8 @@ def create_post(forum_id, thread_id):
 # POST REQUEST
 @app.route('/users/', methods=['POST'])
 def create_user():
-    ''' Creates a new user in the database:
+    ''' 
+    Creates a new user in the database:
 
     Adds a new user to the Users table in the database. Once the username and password
     are registered into the database, that user can now use POST methods in other parts
@@ -370,7 +372,8 @@ def create_user():
 @app.route('/users/', methods=['PUT'])
 @auth_required              # create_forum() = auth_required(create_forum())
 def change_user_pw():
-    ''' Change username's password:
+    ''' 
+    Change username's password:
 
     Allows the currently logged-in user to change his or her password. If the user logged
     in attempts to change the user's password and the request payload's username is the same
