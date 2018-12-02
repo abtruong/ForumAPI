@@ -1,6 +1,6 @@
 # Forum API
 
-Welcome to the ForumAPI! Here, you can find three different implementations of a WebAPI.py that handle the back-end of a website. Each of these three implementations allow storing and querying information from a database. The three different implementations are:
+Welcome to the Forum API! Here, you can find three different implementations of a WebAPI.py that handle the back-end of a website. Each of these three implementations allow storing and querying information from a database. The three different implementations are:
 
 * Relational Database
 * Sharded Database
