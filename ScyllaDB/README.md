@@ -110,7 +110,7 @@ $ docker rm -f scylla && docker rmi scylladb/scylla
 
 ---
 
-__All instructions provided were taught and provided by [Kenytt Avery](https://twitter.com/ProfAvery).__
+_All instructions provided were taught and provided by [Kenytt Avery](https://twitter.com/ProfAvery)._
 
 
 
