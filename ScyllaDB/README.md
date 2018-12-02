@@ -107,10 +107,3 @@ To remove ScyllaDB and start over:
 ```
 $ docker rm -f scylla && docker rmi scylladb/scylla
 ```
-
----
-
-_All instructions provided were taught and provided by [Kenytt Avery](https://twitter.com/ProfAvery)._
-
-
-
