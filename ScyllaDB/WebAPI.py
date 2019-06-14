@@ -44,6 +44,7 @@ def get_time():
 
     When creating a new forum/thread/post, this will get the current time of when
     the user makes a POST request and stores it into the database.
+    I'm so sleepy
     '''
     date = datetime.now()
     day = str(date.strftime("%a"))
